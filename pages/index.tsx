@@ -1,3 +1,4 @@
+// TODO: split into multiple components because this is getting out of hand :)
 import {
   Button,
   Input,
