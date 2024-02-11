@@ -1,15 +1,10 @@
-import styles from './layout.module.css';
-import { Providers } from '../app/providers';
+import { Providers } from "../app/providers";
 
-export default function Layout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <Providers>
-      <div className={styles.container}>
-        <main>{children}</main>
+      <div>
+        <main className="mx-auto max-w-screen-lg">{children}</main>
       </div>
     </Providers>
   );

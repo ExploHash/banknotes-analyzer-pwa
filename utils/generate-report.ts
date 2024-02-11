@@ -194,6 +194,7 @@ export const baseConfig: Config = {
 export function hashRecord(record: Record): string {
   const data = JSON.stringify({
     ...record,
+    id: undefined,
     isException: undefined,
   });
   return crypto.createHash("md5").update(data).digest("hex");

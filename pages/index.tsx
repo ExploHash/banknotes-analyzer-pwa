@@ -2,6 +2,7 @@
 import {
   Button,
   Input,
+  Card,
   Modal,
   ModalBody,
   ModalContent,
@@ -25,7 +26,8 @@ import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import Papa from "papaparse";
 import { useEffect, useState } from "react";
-import { Bar, Pie } from "react-chartjs-2";
+import { Bar, Pie, Line } from "react-chartjs-2";
+import FileLoader from "../components/file_loader";
 import Layout from "../components/layout";
 import {
   bankNoteColumns,
@@ -51,24 +53,41 @@ export default function Home() {
   const [reportConfig, setReportConfig] = useState<Config>({});
   const [reportConfigText, setReportConfigText] = useState("");
   const [exceptionsMap, setExceptionsMap] = useState<ExceptionsMap>({});
-
   const [addRuleCategory, setAddRuleCategory] = useState("");
   const [addRuleColumn, setAddRuleColumn] = useState("");
   const [addRuleValue, setAddRuleValue] = useState("");
+  const [lineModalData, setLineModalData] = useState({} as any);
+  const [lineModalAverage, setLineModalAverage] = useState(0);
+  const [lineModalTotal, setLineModalTotal] = useState(0);
 
   const {
     isOpen: transactionsModalIsOpen,
     onOpen: transactionsModalOnOpen,
     onClose: transactionsModelOnClose,
   } = useDisclosure();
+
   const {
     isOpen: addRuleModalIsOpen,
     onOpen: addRuleModalOnOpen,
     onClose: addRuleModelOnClose,
   } = useDisclosure();
+
+  const {
+    isOpen: lineChartModalIsOpen,
+    onOpen: lineChartModalOnOpen,
+    onClose: lineChartModelOnClose,
+  } = useDisclosure();
+
   const [transactionsModalData, setTransactionsModalData] = useState<Record[]>(
     [],
   );
+
+  const onFileLoad = (data: Record[]) => {
+    setCSVData(data);
+    console.log("CSV Data: ", data);
+    const months = calculateMonths(data);
+    calculateBarData(data, months);
+  };
 
   useEffect(() => {
     // Load config from local storage or use base config
@@ -103,46 +122,13 @@ export default function Home() {
     },
   };
 
-  const handleFileUpload = (e) => {
-    const file = e.target.files[0];
-
-    if (file) {
-      Papa.parse(file, {
-        header: true,
-        beforeFirstChunk: (chunk) => {
-          return bankNoteColumns.join(",") + "\n" + chunk;
-        },
-
-        transform: (value, header) => {
-          if (header === "amount") {
-            return parseFloat(value.replace(".", "").replace(",", "."));
-          }
-          return value;
-        },
-
-        complete: (result: { data: Record[] }) => {
-          // Add id to each record
-          result.data.forEach((row, index) => {
-            row.id = index;
-          });
-
-          setCSVData(result.data);
-          console.log("CSV Data: ", result.data);
-          const months = calculateMonths(result.data);
-          calculateBarData(result.data, months);
-        },
-        error: (error) => {
-          console.error("Error parsing CSV:", error.message);
-        },
-      });
-    }
-  };
-
   const calculateMonths = (records: Record[]): string[] => {
     const uniqueMonths: Set<string> = new Set();
     records.forEach((row) => {
       const month: string = row.date.split("-").slice(1, 3).join("-");
-      uniqueMonths.add(month);
+      if (month.length) {
+        uniqueMonths.add(month);
+      }
     });
 
     setMonths(Array.from(uniqueMonths as any));
@@ -317,8 +303,86 @@ export default function Home() {
     recalculate(selectedMonth);
   };
 
+  const calculateLineData = (category: string, incomeIsPositive = true) => {
+    const lineData = [];
+    const months = Array.from(
+      new Set(csvData.map((row) => row.date.split("-").slice(1, 3).join("-"))),
+    );
+
+    // Remove last month
+    months.pop();
+
+    console.log("Months: ", months);
+    let allTotal = 0;
+    let count = 0;
+
+    for (const month of months) {
+      const filteredData = csvData.filter((row) => {
+        const rowMonth: string = row.date.split("-").slice(1, 3).join("-");
+        return rowMonth === month;
+      });
+
+      const report = generateReport(filteredData, reportConfig, exceptionsMap);
+      const expenseTotal =
+        report.expenseCategories.find((c) => c.name === category)?.amount || 0;
+      const incomeTotal =
+        report.incomeCategories.find((c) => c.name === category)?.amount || 0;
+
+      const total = incomeIsPositive
+        ? incomeTotal - expenseTotal
+        : expenseTotal - incomeTotal;
+
+      lineData.push(total);
+      allTotal += total;
+      count++;
+    }
+
+    const average = allTotal / count;
+    setLineModalAverage(average);
+    setLineModalTotal(allTotal);
+
+    console.log(lineData);
+
+    setLineModalData({
+      labels: months,
+      datasets: [
+        {
+          label: category,
+          data: lineData,
+          fill: false,
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "rgba(75, 192, 192, 1)",
+          borderWidth: 1,
+        },
+      ],
+    });
+  };
+
   return (
     <Layout home>
+      <Modal
+        size="5xl"
+        isOpen={lineChartModalIsOpen}
+        onClose={lineChartModelOnClose}
+      >
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Data</ModalHeader>
+              <ModalBody>
+                <p>Average: {lineModalAverage}</p>
+                <p>Total: {lineModalTotal}</p>
+                <Line data={lineModalData} />
+              </ModalBody>
+              <ModalFooter>
+                <Button color="danger" variant="light" onPress={onClose}>
+                  Close
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
       <Modal
         size="xl"
         isOpen={addRuleModalIsOpen}
@@ -455,14 +519,7 @@ export default function Home() {
           )}
         </ModalContent>
       </Modal>
-      <div className="p-4">
-        <input
-          type="file"
-          accept=".csv"
-          onChange={handleFileUpload}
-          className="rounded-lg border p-2"
-        />
-      </div>
+      <FileLoader onFileLoad={onFileLoad} />
 
       {csvData.length > 0 && <Bar data={barData} />}
 
@@ -550,6 +607,16 @@ export default function Home() {
                   >
                     View Transactions
                   </Button>
+                  <Button
+                    color="primary"
+                    variant="light"
+                    onPress={() => {
+                      lineChartModalOnOpen();
+                      calculateLineData(category.name);
+                    }}
+                  >
+                    View Line Chart
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -584,6 +651,16 @@ export default function Home() {
                     }}
                   >
                     View Transactions
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="light"
+                    onPress={() => {
+                      lineChartModalOnOpen();
+                      calculateLineData(category.name, false);
+                    }}
+                  >
+                    View Line Chart
                   </Button>
                 </TableCell>
               </TableRow>
