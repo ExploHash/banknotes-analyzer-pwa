@@ -1,12 +1,19 @@
-import { Card } from "@nextui-org/react";
+import { Card, Checkbox } from "@nextui-org/react";
 import Papa from "papaparse";
+import { Dispatch, SetStateAction } from "react";
 import { bankNoteColumns, Record } from "../utils/generate-report";
 
 export type FileLoaderProps = {
   onFileLoad: (data: Record[]) => void;
+  IsPaydayToPayday: number;
+  setIsPaydayToPayday: Dispatch<SetStateAction<number>>;
 };
 
-const FileLoader: React.FC<FileLoaderProps> = ({ onFileLoad }) => {
+const FileLoader: React.FC<FileLoaderProps> = ({
+  onFileLoad,
+  IsPaydayToPayday,
+  setIsPaydayToPayday,
+}) => {
   const handleFileUpload = (e) => {
     const file = e.target.files[0];
 
@@ -49,6 +56,13 @@ const FileLoader: React.FC<FileLoaderProps> = ({ onFileLoad }) => {
         onChange={handleFileUpload}
         className="rounded-lg border p-2"
       />
+      <Checkbox
+        className="ml-4"
+        checked={IsPaydayToPayday}
+        onChange={() => setIsPaydayToPayday(!IsPaydayToPayday)}
+      >
+        Payday to Payday
+      </Checkbox>
     </Card>
   );
 };

@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
   Textarea,
-  useDisclosure,
+  useDisclosure
 } from "@nextui-org/react";
 import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -39,6 +39,11 @@ import {
   Record,
   Report,
 } from "../utils/generate-report";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import customParseFormat from "dayjs/plugin/customParseFormat";
+dayjs.extend(isSameOrAfter);
+dayjs.extend(customParseFormat);
 
 export default function Home() {
   const [csvData, setCSVData]: [Record[], any] = useState([]);
@@ -59,7 +64,11 @@ export default function Home() {
   const [lineModalData, setLineModalData] = useState({} as any);
   const [lineModalAverage, setLineModalAverage] = useState(0);
   const [lineModalTotal, setLineModalTotal] = useState(0);
-
+  const [restTotal, setRestTotal] = useState(0);
+  const [IsPaydayToPayday, setIsPaydayToPayday] = useState(0);
+  const [monthIncomeOutgoingData, setMonthIncomeOutgoingData] = useState(
+    {} as any,
+  );
   const {
     isOpen: transactionsModalIsOpen,
     onOpen: transactionsModalOnOpen,
@@ -88,6 +97,15 @@ export default function Home() {
     const months = calculateMonths(data);
     calculateBarData(data, months);
   };
+
+  useEffect(() => {
+    const months = calculateMonths(csvData);
+    calculateBarData(csvData, months);
+
+    if (selectedMonth) {
+      recalculate(selectedMonth);
+    }
+  }, [IsPaydayToPayday]);
 
   useEffect(() => {
     // Load config from local storage or use base config
@@ -145,13 +163,101 @@ export default function Home() {
     const report = calculateData(month);
     const pieData = generatePieData(report);
     setPieData(pieData);
+
+    // Calculate income and outgoing line
+    const monthIncomeOutgoingData = calculateIncomeOutgoingData(month);
+    setMonthIncomeOutgoingData(monthIncomeOutgoingData);
+  };
+
+  const calculateIncomeOutgoingData = (month: string) => {
+    const days = [];
+    const incomeData = [];
+    const outgoingData = [];
+    let summedIncome = 0;
+    let summedOutgoing = 0;
+    const monthData = filterTransactions(csvData, month, IsPaydayToPayday);
+    const daysInMonth = dayjs(`01-${month}`, "DD-MM-YYYY").daysInMonth();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayData = monthData.filter((row) => {
+        const rowDay = dayjs(row.date, "DD-MM-YYYY").date();
+        return rowDay === day;
+      });
+
+      const income = dayData
+        .filter((row) => row.type === "Credit")
+        .reduce((acc, row) => acc + row.amount, 0);
+
+      const outgoing = dayData
+        .filter((row) => row.type !== "Credit")
+        .reduce((acc, row) => acc + row.amount, 0);
+
+      days.push(day);
+
+      summedIncome += income;
+      summedOutgoing += outgoing;
+      incomeData.push(summedIncome);
+      outgoingData.push(summedOutgoing);
+    }
+
+    return {
+      labels: days,
+      datasets: [
+        {
+          label: "Income",
+          data: incomeData,
+          backgroundColor: "rgba(75, 192, 192, 0.2)",
+          borderColor: "rgba(75, 192, 192, 1)",
+          borderWidth: 1,
+        },
+        {
+          label: "Outgoing",
+          data: outgoingData,
+          backgroundColor: "rgba(255, 99, 132, 0.2)",
+          borderColor: "rgba(255, 99, 132, 1)",
+          borderWidth: 1,
+        },
+      ],
+    };
+  };
+
+  const filterTransactions = (
+    data: Record[],
+    selectedMonth: string,
+    IsPaydayToPayday: number,
+  ) => {
+    let filteredData;
+    if (!IsPaydayToPayday) {
+      filteredData = data.filter((row) => {
+        const month: string = row.date.split("-").slice(1, 3).join("-");
+        return month === selectedMonth;
+      });
+    } else {
+      const payday = 26;
+      const month = selectedMonth.split("-")[0];
+      const year = parseInt(selectedMonth.split("-")[1]);
+      const endPayday = dayjs()
+        .year(year)
+        .month(+month - 1)
+        .date(payday);
+      const startPayday = endPayday.subtract(1, "month");
+
+      // Filter with dayjs and format DD-MM-YYYY between payday and payday
+      filteredData = data.filter((row) => {
+        const date = dayjs(row.date, "DD-MM-YYYY");
+        return date.isSameOrAfter(startPayday) && date.isBefore(endPayday);
+      });
+    }
+
+    return filteredData;
   };
 
   const calculateData = (selectedMonth: string) => {
-    const filteredData = csvData.filter((row) => {
-      const month: string = row.date.split("-").slice(1, 3).join("-");
-      return month === selectedMonth;
-    });
+    const filteredData = filterTransactions(
+      csvData,
+      selectedMonth,
+      IsPaydayToPayday,
+    );
 
     const report = generateReport(filteredData, reportConfig, exceptionsMap);
     console.log("Report: ", report);
@@ -186,6 +292,10 @@ export default function Home() {
 
     setOutgoingTotal(outgoingTotal + report.unmatchedExpenseTotal);
 
+    // Calculate rest total
+    const restTotal = incomeTotal - outgoingTotal - savingsTotal;
+    setRestTotal(restTotal);
+
     return report;
   };
 
@@ -195,10 +305,7 @@ export default function Home() {
     const expenseData = [];
 
     for (const month of months) {
-      const filteredData = records.filter((row) => {
-        const rowMonth: string = row.date.split("-").slice(1, 3).join("-");
-        return rowMonth === month;
-      });
+      let filteredData = filterTransactions(records, month, IsPaydayToPayday);
 
       const report = generateReport(filteredData, reportConfig, exceptionsMap);
       const incomeTotal = report.incomeCategories.reduce((total, category) => {
@@ -519,7 +626,11 @@ export default function Home() {
           )}
         </ModalContent>
       </Modal>
-      <FileLoader onFileLoad={onFileLoad} />
+      <FileLoader
+        onFileLoad={onFileLoad}
+        setIsPaydayToPayday={setIsPaydayToPayday}
+        IsPaydayToPayday={IsPaydayToPayday}
+      />
 
       {csvData.length > 0 && <Bar data={barData} />}
 
@@ -565,14 +676,20 @@ export default function Home() {
               </p>
             </div>
           </div>
-          {/* <div className="flex-1">
-        <div>
-          <h2 className="text-xl font-semibold">Outgoing Total</h2>
-          <p className="text-2xl font-bold text-red-600">€{outgoingTotal.toFixed(2)}</p>
+          <div className="flex-1">
+            <div>
+              <h2 className="text-xl font-semibold">Rest total</h2>
+              <p className="text-2xl font-bold text-green-600">
+                €{restTotal.toFixed(2)}
+              </p>
+            </div>
+          </div>
         </div>
-      </div> */}
-        </div>
-
+        {Object.keys(monthIncomeOutgoingData).length > 0 && (
+          <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+            <Line data={monthIncomeOutgoingData} />
+          </div>
+        )}
         <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
           {Object.keys(report).length > 0 && (
             <Pie
