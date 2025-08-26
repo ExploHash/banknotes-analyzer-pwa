@@ -499,11 +499,11 @@ export default function Home() {
           {(onClose) => (
             <>
               <ModalHeader className="flex flex-col gap-1">
-                Transactions
+                Add a new rule
               </ModalHeader>
               <ModalBody>
-                /* Select a addRuleCategory, addRuleColumn and addRuleValue */
                 <Select
+                  label="Category"
                   className="mb-4"
                   onChange={(e) => setAddRuleCategory(e.target.value)}
                 >
@@ -514,6 +514,7 @@ export default function Home() {
                   ))}
                 </Select>
                 <Select
+                  label="Column"
                   className="mb-4"
                   onChange={(e) => setAddRuleColumn(e.target.value)}
                 >
@@ -524,14 +525,12 @@ export default function Home() {
                   ))}
                 </Select>
                 <Input
+                  label="Regex or contain value to match on"
                   className="mb-4"
                   type="text"
-                  placeholder="Value (can be regex otherwise will match if "
                   onChange={(e) => setAddRuleValue(e.target.value)}
                 />
                 <Button
-                  color="primary"
-                  variant="light"
                   onPress={() => {
                     addRule();
                     addRuleModelOnClose();
@@ -541,9 +540,7 @@ export default function Home() {
                 </Button>
               </ModalBody>
               <ModalFooter>
-                <Button color="danger" variant="light" onPress={onClose}>
-                  Close
-                </Button>
+
               </ModalFooter>
             </>
           )}
