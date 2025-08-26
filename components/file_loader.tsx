@@ -2,6 +2,7 @@ import { Card, Checkbox } from "@nextui-org/react";
 import Papa from "papaparse";
 import { Dispatch, SetStateAction } from "react";
 import { bankNoteColumns, Record } from "../utils/generate-report";
+import dayjs from "dayjs";
 
 export type FileLoaderProps = {
   onFileLoad: (data: Record[]) => void;
@@ -14,14 +15,19 @@ const FileLoader: React.FC<FileLoaderProps> = ({
   IsPaydayToPayday,
   setIsPaydayToPayday,
 }) => {
-  const handleFileUpload = (e) => {
+  const handleFileUpload = (e: any) => {
     const file = e.target.files[0];
 
     if (file) {
       Papa.parse(file, {
         header: true,
         beforeFirstChunk: (chunk) => {
-          return bankNoteColumns.join(",") + "\n" + chunk;
+          if(chunk.startsWith('"Datum","Naam / Omschrijving"')) {
+            console.log("detedasjhds");
+            return;
+          } else {
+            return bankNoteColumns.join(",") + "\n" + chunk;
+          }
         },
 
         transform: (value, header) => {
@@ -36,6 +42,30 @@ const FileLoader: React.FC<FileLoaderProps> = ({
           result.data.forEach((row, index) => {
             row.id = index;
           });
+
+
+          // Check if ING format
+          // @ts-expect-error yolo
+          if (result.data[0]["Naam / Omschrijving"]) {
+          // Filter if Datum is null
+            result.data = result.data.filter((row) => {
+              return row["Datum"];
+            })
+
+            result.data = result.data.map((row, index) => {
+              return {
+                id: index,
+                date: dayjs(row["Datum"], "YYYYMMDD").format("DD-MM-YYYY"),
+                accountIBAN: row["Rekening"],
+                amount: parseFloat(row["Bedrag (EUR)"].replace(",", ".")),
+                type: row["Af Bij"] === "Bij" ? "Credit" : "Debet",
+                name: row["Naam / Omschrijving"],
+                IBAN: row["Tegenrekening"] || "",
+                mutationCode: row["Code"],
+                description: row["Mededelingen"],
+              } as Record;
+            });
+          }
 
           onFileLoad(result.data);
         },

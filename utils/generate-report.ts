@@ -12,6 +12,21 @@ export const bankNoteColumns: string[] = [
   "description",
 ];
 
+export const bankNoteColumnsING: string[] = [
+  "Datum",
+  "Naam / Omschrijving",
+  "Rekening",
+  "Tegenrekening",
+  "Code",
+  "Af Bij",
+  "Bedrag (EUR)",
+  "Mutatiesoort",
+  "Mededelingen",
+];
+
+
+
+
 export type Record = {
   id: number;
   date: string;
