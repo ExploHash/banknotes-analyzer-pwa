@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
   Textarea,
-  useDisclosure
+  useDisclosure,
 } from "@nextui-org/react";
 import "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
@@ -526,7 +526,7 @@ export default function Home() {
                 <Input
                   className="mb-4"
                   type="text"
-                  placeholder="Value"
+                  placeholder="Value (can be regex otherwise will match if "
                   onChange={(e) => setAddRuleValue(e.target.value)}
                 />
                 <Button
@@ -632,278 +632,285 @@ export default function Home() {
         IsPaydayToPayday={IsPaydayToPayday}
       />
 
-      {csvData.length > 0 && <Bar data={barData} />}
+      {csvData.length > 0 && (
+        <>
+          <Bar className="mt-10" data={barData} />
 
-      <div className="p-4">
-        <select
-          value={selectedMonth}
-          onChange={handleMonthChange}
-          className="rounded-lg border p-2"
-        >
-          <option value="">Select Month</option>
-          {months.map((month) => (
-            <option key={month} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-          <div className="flex-1">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">Income Total</h2>
-              <p className="text-2xl font-bold text-green-600">
-                €{incomeTotal.toFixed(2)}
-              </p>
-            </div>
+          <div className="p-4">
+            <select
+              value={selectedMonth}
+              onChange={handleMonthChange}
+              className="rounded-lg border p-2"
+            >
+              <option value="">Select Month</option>
+              {months.map((month) => (
+                <option key={month} value={month}>
+                  {month}
+                </option>
+              ))}
+            </select>
           </div>
-          <div className="flex-1">
+          {selectedMonth && (
             <div>
-              <h2 className="text-xl font-semibold">Outgoing Total</h2>
-              <p className="text-2xl font-bold text-red-600">
-                €{outgoingTotal.toFixed(2)}
-              </p>
+              <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-semibold">Income Total</h2>
+                    <p className="text-2xl font-bold text-green-600">
+                      €{incomeTotal.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div>
+                    <h2 className="text-xl font-semibold">Outgoing Total</h2>
+                    <p className="text-2xl font-bold text-red-600">
+                      €{outgoingTotal.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+                <div className="flex-1">
+                  <div className="mb-4">
+                    <h2 className="text-xl font-semibold">Savings total</h2>
+                    <p className="text-2xl font-bold text-green-600">
+                      €{savingsTotal.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div>
+                    <h2 className="text-xl font-semibold">Rest total</h2>
+                    <p className="text-2xl font-bold text-green-600">
+                      €{restTotal.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {Object.keys(monthIncomeOutgoingData).length > 0 && (
+                <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+                  <Line data={monthIncomeOutgoingData} />
+                </div>
+              )}
+              <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+                {Object.keys(report).length > 0 && (
+                  <Pie
+                    data={pieData}
+                    plugins={[ChartDataLabels] as any}
+                    options={pieOptions}
+                  />
+                )}
+              </div>
+
+              <h4>Income categories</h4>
+              <Table>
+                <TableHeader>
+                  <TableColumn>Category</TableColumn>
+                  <TableColumn>Amount</TableColumn>
+                  <TableColumn></TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {report?.incomeCategories?.map((category) => (
+                    <TableRow key={category.name}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>€{category.amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button
+                          color="primary"
+                          variant="light"
+                          onPress={() => {
+                            setTransactionsModalData(category.matchedRecords);
+                            transactionsModalOnOpen();
+                          }}
+                        >
+                          View Transactions
+                        </Button>
+                        <Button
+                          color="primary"
+                          variant="light"
+                          onPress={() => {
+                            lineChartModalOnOpen();
+                            calculateLineData(category.name);
+                          }}
+                        >
+                          View Line Chart
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow key="unknown">
+                    <TableCell>Unknown</TableCell>
+                    <TableCell>
+                      €{report?.unmatchedIncomeTotal?.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <p />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+              <h4>Expense categories</h4>
+              <Table>
+                <TableHeader>
+                  <TableColumn>Category</TableColumn>
+                  <TableColumn>Amount</TableColumn>
+                  <TableColumn></TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {report?.expenseCategories?.map((category) => (
+                    <TableRow key={category.name}>
+                      <TableCell>{category.name}</TableCell>
+                      <TableCell>€{category.amount.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Button
+                          color="primary"
+                          variant="light"
+                          onPress={() => {
+                            setTransactionsModalData(category.matchedRecords);
+                            transactionsModalOnOpen();
+                          }}
+                        >
+                          View Transactions
+                        </Button>
+                        <Button
+                          color="primary"
+                          variant="light"
+                          onPress={() => {
+                            lineChartModalOnOpen();
+                            calculateLineData(category.name, false);
+                          }}
+                        >
+                          View Line Chart
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow key="unknown">
+                    <TableCell>Unknown</TableCell>
+                    <TableCell>
+                      €{report?.unmatchedExpenseTotal?.toFixed(2)}
+                    </TableCell>
+                    <TableCell>
+                      <p />
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+
+              <Button
+                className="my-4"
+                // color="primary"
+                // variant="solid"
+                onPress={() => {
+                  addRuleModalOnOpen();
+                }}
+              >
+                Create new Rule
+              </Button>
+              <h4>Unknown Income</h4>
+              <Table>
+                <TableHeader>
+                  {bankNoteColumns.map((key) => (
+                    <TableColumn key={key}>{key}</TableColumn>
+                  ))}
+                  <TableColumn>Actions</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {report?.unmatchedIncomeRecords?.map((record) => (
+                    <TableRow key={record.id}>
+                      {bankNoteColumns.map((key) => (
+                        // @ts-ignore
+                        <TableCell key={key}>{record[key]}</TableCell>
+                      ))}
+                      <TableCell>
+                        <Popover placement="bottom">
+                          <PopoverTrigger>
+                            <Button>Add Exception</Button>
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <Select className="w-40">
+                              {Object.keys(reportConfig).map((key) => (
+                                <SelectItem
+                                  key={key}
+                                  value={key}
+                                  onClick={() => {
+                                    addException(record, key);
+                                  }}
+                                >
+                                  {key}
+                                </SelectItem>
+                              ))}
+                            </Select>
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <h4>Unknown Expense</h4>
+              <Table>
+                <TableHeader>
+                  {bankNoteColumns.map((key) => (
+                    <TableColumn key={key}>{key}</TableColumn>
+                  ))}
+                  <TableColumn>Actions</TableColumn>
+                </TableHeader>
+                <TableBody>
+                  {report?.unmatchedExpenseRecords?.map((record) => (
+                    <TableRow key={record.id}>
+                      {bankNoteColumns.map((key) => (
+                        // @ts-ignore
+                        <TableCell key={key}>{record[key]}</TableCell>
+                      ))}
+                      <TableCell>
+                        <Popover placement="bottom">
+                          <PopoverTrigger>
+                            <Button>Add Exception</Button>
+                          </PopoverTrigger>
+                          <PopoverContent>
+                            <Select className="w-40">
+                              {Object.keys(reportConfig).map((key) => (
+                                <SelectItem
+                                  key={key}
+                                  value={key}
+                                  onClick={() => {
+                                    addException(record, key);
+                                  }}
+                                >
+                                  {key}
+                                </SelectItem>
+                              ))}
+                            </Select>
+                          </PopoverContent>
+                        </Popover>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <h4>Current Config</h4>
+              <Textarea
+                value={reportConfigText}
+                onChange={(e) => {
+                  setReportConfigText(e.target.value);
+                }}
+              />
+
+              <Button
+                className="my-4"
+                onPress={() => {
+                  updateConfig();
+                }}
+              >
+                Save Config
+              </Button>
             </div>
-          </div>
-        </div>
-        <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-          <div className="flex-1">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold">Savings total</h2>
-              <p className="text-2xl font-bold text-green-600">
-                €{savingsTotal.toFixed(2)}
-              </p>
-            </div>
-          </div>
-          <div className="flex-1">
-            <div>
-              <h2 className="text-xl font-semibold">Rest total</h2>
-              <p className="text-2xl font-bold text-green-600">
-                €{restTotal.toFixed(2)}
-              </p>
-            </div>
-          </div>
-        </div>
-        {Object.keys(monthIncomeOutgoingData).length > 0 && (
-          <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-            <Line data={monthIncomeOutgoingData} />
-          </div>
-        )}
-        <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-          {Object.keys(report).length > 0 && (
-            <Pie
-              data={pieData}
-              plugins={[ChartDataLabels] as any}
-              options={pieOptions}
-            />
           )}
-        </div>
-
-        <h1>Report</h1>
-        <h2>Income categories</h2>
-        <Table>
-          <TableHeader>
-            <TableColumn>Category</TableColumn>
-            <TableColumn>Amount</TableColumn>
-            <TableColumn></TableColumn>
-          </TableHeader>
-          <TableBody>
-            {report?.incomeCategories?.map((category) => (
-              <TableRow key={category.name}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>€{category.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Button
-                    color="primary"
-                    variant="light"
-                    onPress={() => {
-                      setTransactionsModalData(category.matchedRecords);
-                      transactionsModalOnOpen();
-                    }}
-                  >
-                    View Transactions
-                  </Button>
-                  <Button
-                    color="primary"
-                    variant="light"
-                    onPress={() => {
-                      lineChartModalOnOpen();
-                      calculateLineData(category.name);
-                    }}
-                  >
-                    View Line Chart
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            <TableRow key="unknown">
-              <TableCell>Unknown</TableCell>
-              <TableCell>€{report?.unmatchedIncomeTotal?.toFixed(2)}</TableCell>
-              <TableCell>
-                <p />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <h2>Expense categories</h2>
-        <Table>
-          <TableHeader>
-            <TableColumn>Category</TableColumn>
-            <TableColumn>Amount</TableColumn>
-            <TableColumn></TableColumn>
-          </TableHeader>
-          <TableBody>
-            {report?.expenseCategories?.map((category) => (
-              <TableRow key={category.name}>
-                <TableCell>{category.name}</TableCell>
-                <TableCell>€{category.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Button
-                    color="primary"
-                    variant="light"
-                    onPress={() => {
-                      setTransactionsModalData(category.matchedRecords);
-                      transactionsModalOnOpen();
-                    }}
-                  >
-                    View Transactions
-                  </Button>
-                  <Button
-                    color="primary"
-                    variant="light"
-                    onPress={() => {
-                      lineChartModalOnOpen();
-                      calculateLineData(category.name, false);
-                    }}
-                  >
-                    View Line Chart
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-            <TableRow key="unknown">
-              <TableCell>Unknown</TableCell>
-              <TableCell>
-                €{report?.unmatchedExpenseTotal?.toFixed(2)}
-              </TableCell>
-              <TableCell>
-                <p />
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-
-        <Button
-          color="primary"
-          variant="light"
-          onPress={() => {
-            addRuleModalOnOpen();
-          }}
-        >
-          Add Rule
-        </Button>
-        <h1>Unknown Income</h1>
-        <Table>
-          <TableHeader>
-            {bankNoteColumns.map((key) => (
-              <TableColumn key={key}>{key}</TableColumn>
-            ))}
-            <TableColumn>Actions</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {report?.unmatchedIncomeRecords?.map((record) => (
-              <TableRow key={record.id}>
-                {bankNoteColumns.map((key) => (
-                  // @ts-ignore
-                  <TableCell key={key}>{record[key]}</TableCell>
-                ))}
-                <TableCell>
-                  <Popover placement="bottom">
-                    <PopoverTrigger>
-                      <Button>Add Exception</Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <Select className="w-40">
-                        {Object.keys(reportConfig).map((key) => (
-                          <SelectItem
-                            key={key}
-                            value={key}
-                            onClick={() => {
-                              addException(record, key);
-                            }}
-                          >
-                            {key}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-
-        <h1>Unknown Expense</h1>
-        <Table>
-          <TableHeader>
-            {bankNoteColumns.map((key) => (
-              <TableColumn key={key}>{key}</TableColumn>
-            ))}
-            <TableColumn>Actions</TableColumn>
-          </TableHeader>
-          <TableBody>
-            {report?.unmatchedExpenseRecords?.map((record) => (
-              <TableRow key={record.id}>
-                {bankNoteColumns.map((key) => (
-                  // @ts-ignore
-                  <TableCell key={key}>{record[key]}</TableCell>
-                ))}
-                <TableCell>
-                  <Popover placement="bottom">
-                    <PopoverTrigger>
-                      <Button>Add Exception</Button>
-                    </PopoverTrigger>
-                    <PopoverContent>
-                      <Select className="w-40">
-                        {Object.keys(reportConfig).map((key) => (
-                          <SelectItem
-                            key={key}
-                            value={key}
-                            onClick={() => {
-                              addException(record, key);
-                            }}
-                          >
-                            {key}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                    </PopoverContent>
-                  </Popover>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <h1>Current Config</h1>
-        <Textarea
-          value={reportConfigText}
-          onChange={(e) => {
-            setReportConfigText(e.target.value);
-          }}
-        />
-
-        <Button
-          color="primary"
-          variant="light"
-          onPress={() => {
-            updateConfig();
-          }}
-        >
-          Save Config
-        </Button>
-      </div>
+        </>
+      )}
     </Layout>
   );
 }

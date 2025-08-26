@@ -77,7 +77,7 @@ const FileLoader: React.FC<FileLoaderProps> = ({
   };
 
   return (
-    <Card className="p-4">
+    <Card className="p-4 mt-5">
       <h1 className="mb-4 text-2xl font-semibold">Bank Note Report</h1>
       <p>Upload a CSV file to generate a report</p>
       <input
