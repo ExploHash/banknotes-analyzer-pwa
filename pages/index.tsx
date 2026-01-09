@@ -7,9 +7,7 @@ import "chart.js/auto";
 import { useEffect, useState, useMemo } from "react";
 import FileLoader from "../components/file_loader";
 import Layout from "../components/layout";
-import LineChartModal from "../components/modals/LineChartModal";
 import AddRuleModal from "../components/modals/AddRuleModal";
-import TransactionsModal from "../components/modals/TransactionsModal";
 import MonthOverview from "../components/month_overview";
 import CategoriesOverview from "../components/categories_overview";
 import UnknownTransactions from "../components/unknown_transactions";
@@ -39,28 +37,10 @@ export default function Home() {
 
   const [IsPaydayToPayday, setIsPaydayToPayday] = useState(0);
   const {
-    isOpen: transactionsModalIsOpen,
-    onOpen: transactionsModalOnOpen,
-    onClose: transactionsModelOnClose,
-  } = useDisclosure();
-
-  const {
     isOpen: addRuleModalIsOpen,
     onOpen: addRuleModalOnOpen,
     onClose: addRuleModelOnClose,
   } = useDisclosure();
-
-  const {
-    isOpen: lineChartModalIsOpen,
-    onOpen: lineChartModalOnOpen,
-    onClose: lineChartModelOnClose,
-  } = useDisclosure();
-
-  const [transactionsModalData, setTransactionsModalData] = useState<Record[]>(
-    [],
-  );
-  const [lineChartCategory, setLineChartCategory] = useState("");
-  const [lineChartIncomeIsPositive, setLineChartIncomeIsPositive] = useState(true);
 
   const currentMonthTransactions = useMemo(() => {
     if (!selectedMonth || !csvData.length) return [];
@@ -182,28 +162,11 @@ export default function Home() {
 
   return (
     <Layout home>
-      <LineChartModal
-        isOpen={lineChartModalIsOpen}
-        onClose={lineChartModelOnClose}
-        category={lineChartCategory}
-        incomeIsPositive={lineChartIncomeIsPositive}
-        csvData={csvData}
-        reportConfig={reportConfig}
-        exceptionsMap={exceptionsMap}
-      />
       <AddRuleModal
         isOpen={addRuleModalIsOpen}
         onClose={addRuleModelOnClose}
         reportConfig={reportConfig}
         onAddRule={addRule}
-      />
-      <TransactionsModal
-        isOpen={transactionsModalIsOpen}
-        onClose={transactionsModelOnClose}
-        transactionsData={transactionsModalData}
-        reportConfig={reportConfig}
-        onAddException={addException}
-        onRemoveException={removeException}
       />
       <FileLoader
         onFileLoad={onFileLoad}
@@ -233,15 +196,11 @@ export default function Home() {
 
               <CategoriesOverview
                 report={report}
-                onViewTransactions={(matchedRecords) => {
-                  setTransactionsModalData(matchedRecords);
-                  transactionsModalOnOpen();
-                }}
-                onViewLineChart={(categoryName, isIncome) => {
-                  setLineChartCategory(categoryName);
-                  setLineChartIncomeIsPositive(isIncome);
-                  lineChartModalOnOpen();
-                }}
+                reportConfig={reportConfig}
+                exceptionsMap={exceptionsMap}
+                csvData={csvData}
+                onAddException={addException}
+                onRemoveException={removeException}
               />
 
               <Button

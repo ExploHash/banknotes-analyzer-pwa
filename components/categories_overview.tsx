@@ -6,22 +6,77 @@ import {
   TableColumn,
   TableHeader,
   TableRow,
+  useDisclosure,
 } from "@nextui-org/react";
-import { Report } from "../utils/generate-report";
+import { useState } from "react";
+import { Config, ExceptionsMap, Record, Report } from "../utils/generate-report";
+import TransactionsModal from "./modals/TransactionsModal";
+import LineChartModal from "./modals/LineChartModal";
 
 interface CategoriesOverviewProps {
   report: Report;
-  onViewTransactions: (matchedRecords: any[]) => void;
-  onViewLineChart: (categoryName: string, isIncome: boolean) => void;
+  reportConfig: Config;
+  exceptionsMap: ExceptionsMap;
+  csvData: Record[];
+  onAddException: (record: Record, category: string) => void;
+  onRemoveException: (record: Record) => void;
 }
 
 export default function CategoriesOverview({
   report,
-  onViewTransactions,
-  onViewLineChart,
+  reportConfig,
+  exceptionsMap,
+  csvData,
+  onAddException,
+  onRemoveException,
 }: CategoriesOverviewProps) {
+  const {
+    isOpen: transactionsModalIsOpen,
+    onOpen: transactionsModalOnOpen,
+    onClose: transactionsModalOnClose,
+  } = useDisclosure();
+
+  const {
+    isOpen: lineChartModalIsOpen,
+    onOpen: lineChartModalOnOpen,
+    onClose: lineChartModalOnClose,
+  } = useDisclosure();
+
+  const [transactionsModalData, setTransactionsModalData] = useState<Record[]>([]);
+  const [lineChartCategory, setLineChartCategory] = useState("");
+  const [lineChartIncomeIsPositive, setLineChartIncomeIsPositive] = useState(true);
+
+  const handleViewTransactions = (matchedRecords: any[]) => {
+    setTransactionsModalData(matchedRecords);
+    transactionsModalOnOpen();
+  };
+
+  const handleViewLineChart = (categoryName: string, isIncome: boolean) => {
+    setLineChartCategory(categoryName);
+    setLineChartIncomeIsPositive(isIncome);
+    lineChartModalOnOpen();
+  };
+
   return (
     <>
+      <TransactionsModal
+        isOpen={transactionsModalIsOpen}
+        onClose={transactionsModalOnClose}
+        transactionsData={transactionsModalData}
+        reportConfig={reportConfig}
+        onAddException={onAddException}
+        onRemoveException={onRemoveException}
+      />
+      <LineChartModal
+        isOpen={lineChartModalIsOpen}
+        onClose={lineChartModalOnClose}
+        category={lineChartCategory}
+        incomeIsPositive={lineChartIncomeIsPositive}
+        csvData={csvData}
+        reportConfig={reportConfig}
+        exceptionsMap={exceptionsMap}
+      />
+
       <h4>Income categories</h4>
       <Table>
         <TableHeader>
@@ -38,14 +93,14 @@ export default function CategoriesOverview({
                 <Button
                   color="primary"
                   variant="light"
-                  onPress={() => onViewTransactions(category.matchedRecords)}
+                  onPress={() => handleViewTransactions(category.matchedRecords)}
                 >
                   View Transactions
                 </Button>
                 <Button
                   color="primary"
                   variant="light"
-                  onPress={() => onViewLineChart(category.name, true)}
+                  onPress={() => handleViewLineChart(category.name, true)}
                 >
                   View Line Chart
                 </Button>
@@ -84,14 +139,14 @@ export default function CategoriesOverview({
                 <Button
                   color="primary"
                   variant="light"
-                  onPress={() => onViewTransactions(category.matchedRecords)}
+                  onPress={() => handleViewTransactions(category.matchedRecords)}
                 >
                   View Transactions
                 </Button>
                 <Button
                   color="primary"
                   variant="light"
-                  onPress={() => onViewLineChart(category.name, false)}
+                  onPress={() => handleViewLineChart(category.name, false)}
                 >
                   View Line Chart
                 </Button>
