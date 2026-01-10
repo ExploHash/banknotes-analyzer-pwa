@@ -122,11 +122,17 @@ export default function Home() {
 
 
   const addRule = (category: string, column: string, value: string) => {
-    reportConfig[category].push({
-      [column]: value,
-    });
-    setReportConfig(reportConfig);
-    saveConfig(reportConfig);
+    const newConfig = {
+      ...reportConfig,
+      [category]: [
+        ...reportConfig[category],
+        {
+          [column]: value,
+        },
+      ],
+    };
+    setReportConfig(newConfig);
+    saveConfig(newConfig);
   };
 
   const updateConfig = () => {

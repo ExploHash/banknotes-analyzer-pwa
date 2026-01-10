@@ -8,10 +8,12 @@ import {
   TableRow,
   useDisclosure,
 } from "@nextui-org/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Config, ExceptionsMap, Record, Report } from "../utils/generate-report";
 import TransactionsModal from "./modals/TransactionsModal";
 import LineChartModal from "./modals/LineChartModal";
+import SetBudget from "./modals/SetBudgetModal";
+import SetBudgetModal from "./modals/SetBudgetModal";
 
 interface CategoriesOverviewProps {
   report: Report;
@@ -31,6 +33,12 @@ export default function CategoriesOverview({
   onRemoveException,
 }: CategoriesOverviewProps) {
   const {
+    isOpen: budgetModalIsOpen,
+    onOpen: budgetModalOnOpen,
+    onClose: budgetModalOnClose,
+  } = useDisclosure();
+
+  const {
     isOpen: transactionsModalIsOpen,
     onOpen: transactionsModalOnOpen,
     onClose: transactionsModalOnClose,
@@ -45,6 +53,8 @@ export default function CategoriesOverview({
   const [transactionsModalData, setTransactionsModalData] = useState<Record[]>([]);
   const [lineChartCategory, setLineChartCategory] = useState("");
   const [lineChartIncomeIsPositive, setLineChartIncomeIsPositive] = useState(true);
+  const [budgetTargets, setBudgetTargets] = useState<{[key: string]: number}>({});
+  const [budgetModalCategory, setBudgetModalCategory] = useState("");
 
   const handleViewTransactions = (matchedRecords: any[]) => {
     setTransactionsModalData(matchedRecords);
@@ -57,8 +67,53 @@ export default function CategoriesOverview({
     lineChartModalOnOpen();
   };
 
+  const handleViewSetBudget = (category: string) => {
+    setBudgetModalCategory(category);
+    budgetModalOnOpen();
+  }
+
+  const loadBudgetTargets = () => {
+    const budgetTargetText = localStorage.getItem("budgetTargets") ?? "{}";
+    setBudgetTargets(JSON.parse(budgetTargetText));
+  }
+
+  const saveBudgetTargets = () => {
+    localStorage.setItem("budgetTargets", JSON.stringify(budgetTargets));
+  }
+
+  const setBudgetForCategory = (category: string, budget: number) => {
+    setBudgetTargets({
+      ...budgetTargets,
+      [category]: budget,
+    });
+  }
+
+  const renderVariance = (amount, budget) => {
+    const variance = Math.round(budget - amount);
+    const color = variance > 0 ? "green" : "red"
+    return budget ? <span style={{color}}>€{variance}</span> : "-"
+  }
+
+
+  useEffect(() => {
+    loadBudgetTargets();
+  }, [])
+
+  useEffect(() => {
+    if (Object.keys(budgetTargets ?? {}).length > 0) {
+      console.log("saving", budgetTargets)
+      saveBudgetTargets();
+    }
+  }, [budgetTargets])
+
   return (
     <>
+      <SetBudgetModal
+        category={budgetModalCategory}
+        isOpen={budgetModalIsOpen}
+        onClose={budgetModalOnClose}
+        onBudgetSet={setBudgetForCategory}
+      />
       <TransactionsModal
         isOpen={transactionsModalIsOpen}
         onClose={transactionsModalOnClose}
@@ -104,6 +159,7 @@ export default function CategoriesOverview({
                 >
                   View Line Chart
                 </Button>
+
               </TableCell>
             </TableRow>
           ))}
@@ -133,8 +189,8 @@ export default function CategoriesOverview({
             <TableRow key={category.name}>
               <TableCell>{category.name}</TableCell>
               <TableCell>€{category.amount.toFixed(2)}</TableCell>
-              <TableCell>Yourmum</TableCell>
-              <TableCell>Yourmum</TableCell>
+              <TableCell>{budgetTargets[category.name] ? "€" + budgetTargets[category.name] : "-"}</TableCell>
+              <TableCell>{renderVariance(category.amount, budgetTargets[category.name])}</TableCell>
               <TableCell>
                 <Button
                   color="primary"
@@ -149,6 +205,13 @@ export default function CategoriesOverview({
                   onPress={() => handleViewLineChart(category.name, false)}
                 >
                   View Line Chart
+                </Button>
+                <Button
+                  color="primary"
+                  variant="light"
+                  onPress={() => handleViewSetBudget(category.name)}
+                >
+                  Set Budget Target
                 </Button>
               </TableCell>
             </TableRow>
