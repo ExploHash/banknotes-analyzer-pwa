@@ -33,6 +33,9 @@ export default function MonthOverview({
 
   const pieOptions = {
     plugins: {
+      legend: {
+        display: false,
+      },
       datalabels: {
         display: true,
         color: "white",
@@ -182,55 +185,93 @@ export default function MonthOverview({
   }, [currentMonthTransactions, selectedMonth, reportConfig, exceptionsMap]);
 
   return (
-    <div>
-      <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-        <div className="flex-1">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Income Total</h2>
-            <p className="text-2xl font-bold text-green-600">
-              €{incomeTotal.toFixed(2)}
-            </p>
+    <div className="space-y-6">
+      {/* Financial Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 shadow-lg border border-green-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-700 uppercase tracking-wide">Income Total</p>
+              <p className="text-3xl font-bold text-green-900 mt-2">
+                €{incomeTotal.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-green-500 rounded-full p-3">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </div>
           </div>
         </div>
-        <div className="flex-1">
-          <div>
-            <h2 className="text-xl font-semibold">Outgoing Total</h2>
-            <p className="text-2xl font-bold text-red-600">
-              €{outgoingTotal.toFixed(2)}
-            </p>
+
+        <div className="bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-6 shadow-lg border border-red-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-red-700 uppercase tracking-wide">Outgoing Total</p>
+              <p className="text-3xl font-bold text-red-900 mt-2">
+                €{outgoingTotal.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-red-500 rounded-full p-3">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 shadow-lg border border-blue-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-700 uppercase tracking-wide">Savings Total</p>
+              <p className="text-3xl font-bold text-blue-900 mt-2">
+                €{savingsTotal.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-blue-500 rounded-full p-3">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 shadow-lg border border-purple-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-700 uppercase tracking-wide">Rest Total</p>
+              <p className="text-3xl font-bold text-purple-900 mt-2">
+                €{restTotal.toFixed(2)}
+              </p>
+            </div>
+            <div className="bg-purple-500 rounded-full p-3">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
           </div>
         </div>
       </div>
-      <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
-        <div className="flex-1">
-          <div className="mb-4">
-            <h2 className="text-xl font-semibold">Savings total</h2>
-            <p className="text-2xl font-bold text-green-600">
-              €{savingsTotal.toFixed(2)}
-            </p>
-          </div>
-        </div>
-        <div className="flex-1">
-          <div>
-            <h2 className="text-xl font-semibold">Rest total</h2>
-            <p className="text-2xl font-bold text-green-600">
-              €{restTotal.toFixed(2)}
-            </p>
-          </div>
-        </div>
-      </div>
+
+      {/* Daily Income/Outgoing Chart */}
       {Object.keys(monthIncomeOutgoingData).length > 0 && (
-        <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+        <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Daily Cumulative Flow</h3>
           <Line data={monthIncomeOutgoingData} />
         </div>
       )}
-      <div className="flex rounded-md bg-gray-100 p-4 shadow-md">
+
+      {/* Expense Breakdown Pie Chart */}
+      <div className="bg-white rounded-xl p-6 shadow-lg border border-gray-200">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">Expense Breakdown</h3>
         {Object.keys(pieData).length > 0 && (
-          <Pie
-            data={pieData}
-            plugins={[ChartDataLabels] as any}
-            options={pieOptions}
-          />
+          <div className="max-w-md mx-auto">
+            <Pie
+              data={pieData}
+              plugins={[ChartDataLabels] as any}
+              options={pieOptions}
+            />
+          </div>
         )}
       </div>
     </div>

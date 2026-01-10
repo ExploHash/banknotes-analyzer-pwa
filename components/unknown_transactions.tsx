@@ -26,9 +26,22 @@ export default function UnknownTransactions({
   onAddException,
 }: UnknownTransactionsProps) {
   return (
-    <>
-      <h4>Unknown Income</h4>
-      <Table>
+    <div className="space-y-6">
+      {/* Unknown Income Section */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+          <h3 className="text-xl font-bold text-white">Unknown Income Transactions</h3>
+        </div>
+        <div className="p-6 overflow-x-auto">
+          <Table
+            aria-label="Unknown income transactions table"
+            classNames={{
+              wrapper: "shadow-none",
+              th: "bg-gray-50 text-gray-700 font-semibold text-xs uppercase tracking-wider",
+              td: "text-gray-900 text-sm",
+              tr: "hover:bg-yellow-50 transition-colors"
+            }}
+          >
         <TableHeader>
           {bankNoteColumns.map((key) => (
             <TableColumn key={key}>{key}</TableColumn>
@@ -45,10 +58,19 @@ export default function UnknownTransactions({
               <TableCell>
                 <Popover placement="bottom">
                   <PopoverTrigger>
-                    <Button>Add Exception</Button>
+                    <Button
+                      size="sm"
+                      className="bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-md hover:shadow-lg transition-all"
+                    >
+                      ✏️ Categorize
+                    </Button>
                   </PopoverTrigger>
-                  <PopoverContent>
-                    <Select className="w-40">
+                  <PopoverContent className="p-2">
+                    <Select 
+                      className="w-48"
+                      label="Select category"
+                      size="sm"
+                    >
                       {Object.keys(reportConfig).map((key) => (
                         <SelectItem
                           key={key}
@@ -65,10 +87,25 @@ export default function UnknownTransactions({
             </TableRow>
           ))}
         </TableBody>
-      </Table>
+          </Table>
+        </div>
+      </div>
 
-      <h4>Unknown Expense</h4>
-      <Table>
+      {/* Unknown Expense Section */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+          <h3 className="text-xl font-bold text-white">Unknown Expense Transactions</h3>
+        </div>
+        <div className="p-6 overflow-x-auto">
+          <Table
+            aria-label="Unknown expense transactions table"
+            classNames={{
+              wrapper: "shadow-none",
+              th: "bg-gray-50 text-gray-700 font-semibold text-xs uppercase tracking-wider",
+              td: "text-gray-900 text-sm",
+              tr: "hover:bg-orange-50 transition-colors"
+            }}
+          >
         <TableHeader>
           {bankNoteColumns.map((key) => (
             <TableColumn key={key}>{key}</TableColumn>
@@ -85,10 +122,19 @@ export default function UnknownTransactions({
               <TableCell>
                 <Popover placement="bottom">
                   <PopoverTrigger>
-                    <Button>Add Exception</Button>
+                    <Button
+                      size="sm"
+                      className="bg-indigo-500 hover:bg-indigo-600 text-white font-medium shadow-md hover:shadow-lg transition-all"
+                    >
+                      ✏️ Categorize
+                    </Button>
                   </PopoverTrigger>
-                  <PopoverContent>
-                    <Select className="w-40">
+                  <PopoverContent className="p-2">
+                    <Select 
+                      className="w-48"
+                      label="Select category"
+                      size="sm"
+                    >
                       {Object.keys(reportConfig).map((key) => (
                         <SelectItem
                           key={key}
@@ -105,7 +151,9 @@ export default function UnknownTransactions({
             </TableRow>
           ))}
         </TableBody>
-      </Table>
-    </>
+          </Table>
+        </div>
+      </div>
+    </div>
   );
 }

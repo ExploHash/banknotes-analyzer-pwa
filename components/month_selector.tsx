@@ -101,17 +101,30 @@ export default function MonthSelector({
   }, [csvData, months, reportConfig, exceptionsMap, IsPaydayToPayday]);
 
   return (
-    <>
-      {Object.keys(barData).length > 0 && (
-        <Bar className="mt-10" data={barData} />
-      )}
-      <div className="p-4">
+    <div className="space-y-6">
+      {/* Overview Bar Chart */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+        <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+          <h3 className="text-xl font-bold text-white">Financial Overview</h3>
+        </div>
+        <div className="p-6">
+          {Object.keys(barData).length > 0 && (
+            <Bar data={barData} />
+          )}
+        </div>
+      </div>
+
+      {/* Month Selector */}
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6">
+        <label className="block text-sm font-semibold text-gray-700 mb-3">
+          Select Month
+        </label>
         <select
           value={selectedMonth}
           onChange={(e) => onMonthChange(e.target.value)}
-          className="rounded-lg border p-2"
+          className="w-full md:w-auto px-4 py-3 rounded-lg border-2 border-gray-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition-all duration-200 text-gray-700 font-medium"
         >
-          <option value="">Select Month</option>
+          <option value="">Choose a month...</option>
           {months.map((month) => (
             <option key={month} value={month}>
               {month}
@@ -119,6 +132,6 @@ export default function MonthSelector({
           ))}
         </select>
       </div>
-    </>
+    </div>
   );
 }

@@ -174,74 +174,102 @@ export default function Home() {
         reportConfig={reportConfig}
         onAddRule={addRule}
       />
-      <FileLoader
-        onFileLoad={onFileLoad}
-        setIsPaydayToPayday={setIsPaydayToPayday}
-        IsPaydayToPayday={IsPaydayToPayday}
-      />
+      
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header Section */}
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">Financial Analyzer</h1>
+            <p className="text-gray-600">Track your income, expenses, and savings</p>
+          </div>
 
-      {csvData.length > 0 && (
-        <>
-          <MonthSelector
-            csvData={csvData}
-            months={months}
-            selectedMonth={selectedMonth}
-            onMonthChange={handleMonthChange}
-            reportConfig={reportConfig}
-            exceptionsMap={exceptionsMap}
-            IsPaydayToPayday={IsPaydayToPayday}
-          />
-          {selectedMonth && (
-            <div>
-              <MonthOverview
-                currentMonthTransactions={currentMonthTransactions}
-                selectedMonth={selectedMonth}
-                reportConfig={reportConfig}
-                exceptionsMap={exceptionsMap}
-              />
+          {/* File Loader Card */}
+          <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-6 mb-8">
+            <FileLoader
+              onFileLoad={onFileLoad}
+              setIsPaydayToPayday={setIsPaydayToPayday}
+              IsPaydayToPayday={IsPaydayToPayday}
+            />
+          </div>
 
-              <CategoriesOverview
-                report={report}
-                reportConfig={reportConfig}
-                exceptionsMap={exceptionsMap}
+          {csvData.length > 0 && (
+            <div className="space-y-8">
+              <MonthSelector
                 csvData={csvData}
-                onAddException={addException}
-                onRemoveException={removeException}
-              />
-
-              <Button
-                className="my-4"
-                onPress={() => {
-                  addRuleModalOnOpen();
-                }}
-              >
-                Create new Rule
-              </Button>
-              <UnknownTransactions
-                report={report}
+                months={months}
+                selectedMonth={selectedMonth}
+                onMonthChange={handleMonthChange}
                 reportConfig={reportConfig}
-                onAddException={addException}
+                exceptionsMap={exceptionsMap}
+                IsPaydayToPayday={IsPaydayToPayday}
               />
-              <h4>Current Config</h4>
-              <Textarea
-                value={reportConfigText}
-                onChange={(e) => {
-                  setReportConfigText(e.target.value);
-                }}
-              />
+              
+              {selectedMonth && (
+                <div className="space-y-8">
+                  <MonthOverview
+                    currentMonthTransactions={currentMonthTransactions}
+                    selectedMonth={selectedMonth}
+                    reportConfig={reportConfig}
+                    exceptionsMap={exceptionsMap}
+                  />
 
-              <Button
-                className="my-4"
-                onPress={() => {
-                  updateConfig();
-                }}
-              >
-                Save Config
-              </Button>
+                  <CategoriesOverview
+                    report={report}
+                    reportConfig={reportConfig}
+                    exceptionsMap={exceptionsMap}
+                    csvData={csvData}
+                    onAddException={addException}
+                    onRemoveException={removeException}
+                  />
+
+                  {/* Create Rule Button */}
+                  <div className="flex justify-center">
+                    <Button
+                      className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold px-8 py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-200"
+                      onPress={() => {
+                        addRuleModalOnOpen();
+                      }}
+                    >
+                      + Create New Rule
+                    </Button>
+                  </div>
+
+                  <UnknownTransactions
+                    report={report}
+                    reportConfig={reportConfig}
+                    onAddException={addException}
+                  />
+
+                  {/* Config Section */}
+                  <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+                    <div className="bg-gradient-to-r from-indigo-500 to-indigo-600 px-6 py-4">
+                      <h3 className="text-xl font-bold text-white">Configuration Editor</h3>
+                    </div>
+                    <div className="p-6 space-y-4">
+                      <Textarea
+                        value={reportConfigText}
+                        onChange={(e) => {
+                          setReportConfigText(e.target.value);
+                        }}
+                        className="font-mono text-sm"
+                        minRows={10}
+                      />
+                      <Button
+                        className="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-semibold px-6 py-2 rounded-lg shadow-md hover:shadow-lg transition-all duration-200"
+                        onPress={() => {
+                          updateConfig();
+                        }}
+                      >
+                        💾 Save Config
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
-        </>
-      )}
+        </div>
+      </div>
     </Layout>
   );
 }
