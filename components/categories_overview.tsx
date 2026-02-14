@@ -14,6 +14,7 @@ import TransactionsModal from "./modals/TransactionsModal";
 import LineChartModal from "./modals/LineChartModal";
 import SetBudget from "./modals/SetBudgetModal";
 import SetBudgetModal from "./modals/SetBudgetModal";
+import DailyExpenseModal from "./modals/DailyExpenseModal";
 
 interface CategoriesOverviewProps {
   report: Report;
@@ -22,6 +23,7 @@ interface CategoriesOverviewProps {
   csvData: Record[];
   onAddException: (record: Record, category: string) => void;
   onRemoveException: (record: Record) => void;
+  selectedMonth: string;
 }
 
 export default function CategoriesOverview({
@@ -31,6 +33,7 @@ export default function CategoriesOverview({
   csvData,
   onAddException,
   onRemoveException,
+  selectedMonth,
 }: CategoriesOverviewProps) {
   const {
     isOpen: budgetModalIsOpen,
@@ -50,11 +53,19 @@ export default function CategoriesOverview({
     onClose: lineChartModalOnClose,
   } = useDisclosure();
 
+  const {
+    isOpen: dailyExpenseModalIsOpen,
+    onOpen: dailyExpenseModalOnOpen,
+    onClose: dailyExpenseModalOnClose,
+  } = useDisclosure();
+
   const [transactionsModalData, setTransactionsModalData] = useState<Record[]>([]);
   const [lineChartCategory, setLineChartCategory] = useState("");
   const [lineChartIncomeIsPositive, setLineChartIncomeIsPositive] = useState(true);
   const [budgetTargets, setBudgetTargets] = useState<{[key: string]: number}>({});
   const [budgetModalCategory, setBudgetModalCategory] = useState("");
+  const [dailyExpenseModalData, setDailyExpenseModalData] = useState<Record[]>([]);
+  const [dailyExpenseModalCategory, setDailyExpenseModalCategory] = useState("");
 
   const handleViewTransactions = (matchedRecords: any[]) => {
     setTransactionsModalData(matchedRecords);
@@ -71,6 +82,12 @@ export default function CategoriesOverview({
     setBudgetModalCategory(category);
     budgetModalOnOpen();
   }
+
+  const handleViewDailyChart = (categoryName: string, matchedRecords: Record[]) => {
+    setDailyExpenseModalCategory(categoryName);
+    setDailyExpenseModalData(matchedRecords);
+    dailyExpenseModalOnOpen();
+  };
 
   const loadBudgetTargets = () => {
     const budgetTargetText = localStorage.getItem("budgetTargets") ?? "{}";
@@ -147,6 +164,13 @@ export default function CategoriesOverview({
         reportConfig={reportConfig}
         exceptionsMap={exceptionsMap}
         budgetTargets={budgetTargets}
+      />
+      <DailyExpenseModal
+        isOpen={dailyExpenseModalIsOpen}
+        onClose={dailyExpenseModalOnClose}
+        categoryRecords={dailyExpenseModalData}
+        selectedMonth={selectedMonth}
+        categoryName={dailyExpenseModalCategory}
       />
 
       {/* Income Categories Section */}
@@ -258,6 +282,13 @@ export default function CategoriesOverview({
                     onPress={() => handleViewSetBudget(category.name)}
                   >
                     🎯 Set Budget
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="bg-red-500 hover:bg-red-600 text-white font-medium shadow-md hover:shadow-lg transition-all"
+                    onPress={() => handleViewDailyChart(category.name, category.matchedRecords)}
+                  >
+                    📊 Daily Chart
                   </Button>
                 </div>
               </TableCell>

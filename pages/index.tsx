@@ -220,6 +220,7 @@ export default function Home() {
                     csvData={csvData}
                     onAddException={addException}
                     onRemoveException={removeException}
+                    selectedMonth={selectedMonth}
                   />
 
                   {/* Create Rule Button */}
