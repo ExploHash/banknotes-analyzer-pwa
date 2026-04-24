@@ -105,10 +105,17 @@ export default function CategoriesOverview({
     });
   }
 
-  const renderVariance = (actual: number, budget?: number) => {
+  const getCategoryIncome = (categoryName: string) => {
+    return (
+      report?.incomeCategories?.find((c) => c.name === categoryName)?.amount ?? 0
+    );
+  };
+
+  const renderVariance = (actual: number, income: number, budget?: number) => {
     if (!budget) return <span className="text-gray-400">-</span>;
 
-    const variance = budget - actual;
+    const netActual = actual - income;
+    const variance = budget - netActual;
     const percentage = ((variance / budget) * 100).toFixed(1);
 
     if (variance > 0) {
@@ -249,17 +256,21 @@ export default function CategoriesOverview({
         <TableHeader>
           <TableColumn>Category</TableColumn>
           <TableColumn>Amount</TableColumn>
+          <TableColumn>Income</TableColumn>
           <TableColumn>Budget</TableColumn>
           <TableColumn>Variance</TableColumn>
           <TableColumn>Actions</TableColumn>
         </TableHeader>
         <TableBody>
-          {report?.expenseCategories?.map((category) => (
+          {report?.expenseCategories?.map((category) => {
+            const categoryIncome = getCategoryIncome(category.name);
+            return (
             <TableRow key={category.name}>
               <TableCell className="font-medium">{category.name}</TableCell>
               <TableCell className="font-semibold text-red-600 text-lg">€{category.amount.toFixed(2)}</TableCell>
+              <TableCell className="font-semibold text-green-600 text-lg">{categoryIncome > 0 ? `€${categoryIncome.toFixed(2)}` : "-"}</TableCell>
               <TableCell className="font-medium text-gray-700">{budgetTargets[category.name] ? `€${budgetTargets[category.name]}` : "-"}</TableCell>
-              <TableCell>{renderVariance(category.amount, budgetTargets[category.name])}</TableCell>
+              <TableCell>{renderVariance(category.amount, categoryIncome, budgetTargets[category.name])}</TableCell>
               <TableCell>
                 <div className="flex gap-2 flex-wrap">
                   <Button
@@ -293,7 +304,8 @@ export default function CategoriesOverview({
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
           <TableRow key="unknown">
             <TableCell className="font-medium">Unknown</TableCell>
             <TableCell className="font-semibold text-red-600 text-lg">
@@ -301,8 +313,52 @@ export default function CategoriesOverview({
             </TableCell>
             <TableCell>-</TableCell>
             <TableCell>-</TableCell>
+            <TableCell>-</TableCell>
             <TableCell></TableCell>
           </TableRow>
+          {(() => {
+            const budgetedCategories = (report?.expenseCategories ?? []).filter(
+              (c) => budgetTargets[c.name],
+            );
+            const totalAmount =
+              (report?.expenseCategories ?? []).reduce((s, c) => s + c.amount, 0) +
+              (report?.unmatchedExpenseTotal ?? 0);
+            const totalIncome = (report?.expenseCategories ?? []).reduce(
+              (s, c) => s + getCategoryIncome(c.name),
+              0,
+            );
+            const totalBudget = budgetedCategories.reduce(
+              (s, c) => s + budgetTargets[c.name],
+              0,
+            );
+            const totalNetActual = budgetedCategories.reduce(
+              (s, c) => s + (c.amount - getCategoryIncome(c.name)),
+              0,
+            );
+            const totalVariance = totalBudget - totalNetActual;
+            return (
+              <TableRow key="totals" className="bg-gray-50 border-t-2 border-gray-300">
+                <TableCell className="font-bold text-gray-900">Total</TableCell>
+                <TableCell className="font-bold text-red-600 text-lg">€{totalAmount.toFixed(2)}</TableCell>
+                <TableCell className="font-bold text-green-600 text-lg">{totalIncome > 0 ? `€${totalIncome.toFixed(2)}` : "-"}</TableCell>
+                <TableCell className="font-bold text-gray-700">{totalBudget > 0 ? `€${totalBudget.toFixed(2)}` : "-"}</TableCell>
+                <TableCell className="font-bold">
+                  {totalBudget > 0 ? (
+                    totalVariance > 0 ? (
+                      <span className="text-green-600">+€{totalVariance.toFixed(2)}</span>
+                    ) : totalVariance < 0 ? (
+                      <span className="text-red-600">-€{Math.abs(totalVariance).toFixed(2)}</span>
+                    ) : (
+                      <span className="text-gray-600">€0.00</span>
+                    )
+                  ) : (
+                    <span className="text-gray-400">-</span>
+                  )}
+                </TableCell>
+                <TableCell> </TableCell>
+              </TableRow>
+            );
+          })()}
         </TableBody>
           </Table>
         </div>
